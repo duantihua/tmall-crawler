@@ -26,10 +26,14 @@ import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.beangle.commons.collection.CollectUtils;
+import org.beangle.commons.io.IOs;
+
+import com.sun.xml.internal.messaging.saaj.util.ByteInputStream;
 
 public class Excel implements Writer {
   private XSSFWorkbook wb = new XSSFWorkbook();
-  private XSSFSheet sheet = wb.createSheet("data");
+  private int sheetIdx = 0;
+  private XSSFSheet sheet = wb.createSheet("data0");
   private CreationHelper helper = wb.getCreationHelper();
   private Drawing drawing = sheet.createDrawingPatriarch();
   private XSSFCellStyle textStyle = wb.createCellStyle();
@@ -44,6 +48,14 @@ public class Excel implements Writer {
     this.outputFile = outputFile;
     textStyle.setWrapText(true);
     priceStyle.setDataFormat((short) BuiltinFormats.getBuiltinFormat("0.00"));
+    initSheet();
+  }
+
+  public Excel() {
+    this("/tmp/excel.xlsx");
+  }
+
+  private void initSheet() {
     sheet.setColumnWidth(1, 3 * 4500);
     sheet.setColumnWidth(2, 3800);
     sheet.setColumnWidth(3, 3 * 4200);
@@ -56,12 +68,14 @@ public class Excel implements Writer {
     header.createCell(5).setCellValue(new XSSFRichTextString("实际售价"));
   }
 
-  public Excel() {
-    this("/tmp/excel.xlsx");
-  }
-
   @Override
   public boolean write(Map<String, Object> data) throws Exception {
+    if (rowIdx >= 300) {
+      sheetIdx++;
+      sheet = wb.createSheet("data" + sheetIdx);
+      rowIdx = 0;
+      initSheet();
+    }
     String code = data.get(Code).toString();
     String title = data.get(Title).toString();
     String href = data.get(Href).toString();
@@ -76,8 +90,9 @@ public class Excel implements Writer {
     XSSFCell titleCell = row.createCell(1);
     titleCell.setCellValue(new XSSFRichTextString(title));// 标题
     titleCell.setCellStyle(textStyle);
-    InputStream is =new URL(imgurl).openStream();
+    InputStream is = new URL(imgurl).openStream();
     byte[] bytes = IOUtils.toByteArray(is);
+    IOs.copy(new ByteInputStream(bytes, bytes.length), new FileOutputStream("/tmp/" + code + ".jpg"));
     is.close();
     int pictureIdx = wb.addPicture(bytes, XSSFWorkbook.PICTURE_TYPE_JPEG);
     ClientAnchor anchor = helper.createClientAnchor();

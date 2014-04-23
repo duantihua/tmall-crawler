@@ -28,11 +28,17 @@ public class Main {
       logger.info("process page:{}", i);
       String content = getString(url + "&pageNo=" + i);
       ListParser parser = new ListParser(content);
+      int j = 0;
       while (parser.hasNext()) {
         Map<String, Object> data = parser.next();
         String href = data.get("href").toString();
         data.putAll(detailParser.parse(getString(href)));
         if (writer.write(data)) logger.info("add item{}:{}", ++count, href);
+        j++;
+        if(j==12) {
+          System.out.println(href);
+        }
+        if (j >= 60) break;
       }
       i++;
     }
