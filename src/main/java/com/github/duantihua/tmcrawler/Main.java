@@ -31,9 +31,8 @@ public class Main {
       while (parser.hasNext()) {
         Map<String, Object> data = parser.next();
         String href = data.get("href").toString();
-        logger.info("process item{}:{}", ++count, href);
         data.putAll(detailParser.parse(getString(href)));
-        writer.write(data);
+        if (writer.write(data)) logger.info("add item{}:{}", ++count, href);
       }
       i++;
     }

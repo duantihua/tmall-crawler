@@ -1,12 +1,17 @@
-*.class
+# Typically *NIX text editors, by default, append '~' to files on saving to make backups
+*~
 
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
+# Build output directies
+target
 
-# Package Files #
-*.jar
-*.war
-*.ear
-
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
-hs_err_pid*
+# Eclipse specific files/directories
+.classpath
+.project
+.settings
+.metadata
+.tomcatplugin
+test-output
+RemoteSystemsTempFiles
+Servers
+work
+.#webclasspath

@@ -1,6 +1,14 @@
 package com.github.duantihua.tmcrawler;
 
+import static com.github.duantihua.tmcrawler.ProductAttributes.Code;
+import static com.github.duantihua.tmcrawler.ProductAttributes.DefaultPrice;
+import static com.github.duantihua.tmcrawler.ProductAttributes.Href;
+import static com.github.duantihua.tmcrawler.ProductAttributes.ImageUrl;
+import static com.github.duantihua.tmcrawler.ProductAttributes.Price;
+import static com.github.duantihua.tmcrawler.ProductAttributes.Title;
+
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.Map;
 import java.util.Set;
@@ -19,8 +27,6 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.beangle.commons.collection.CollectUtils;
 
-import static com.github.duantihua.tmcrawler.ProductAttributes.*;
-
 public class Excel implements Writer {
   private XSSFWorkbook wb = new XSSFWorkbook();
   private XSSFSheet sheet = wb.createSheet("data");
@@ -30,7 +36,7 @@ public class Excel implements Writer {
   private XSSFCellStyle priceStyle = wb.createCellStyle();
   private int rowIdx = 0;
 
-  private Set<String> hrefs = CollectUtils.newHashSet();
+  private Set<String> codes = CollectUtils.newHashSet();
   private String outputFile;
 
   public Excel(String outputFile) {
@@ -62,15 +68,17 @@ public class Excel implements Writer {
     String imgurl = data.get(ImageUrl).toString();
     Float price = (Float) data.get(Price);
     Float defaultPrice = (Float) data.get(DefaultPrice);
-    if (hrefs.contains(href)) return false;
-    hrefs.add(href);
+    if (codes.contains(code)) return false;
+    codes.add(code);
     XSSFRow row = sheet.createRow(rowIdx); // 建立新行
     row.setHeight((short) 1600);
     row.createCell(0).setCellValue(new XSSFRichTextString(code)); // 款号
     XSSFCell titleCell = row.createCell(1);
     titleCell.setCellValue(new XSSFRichTextString(title));// 标题
     titleCell.setCellStyle(textStyle);
-    byte[] bytes = IOUtils.toByteArray(new URL(imgurl).openStream());
+    InputStream is =new URL(imgurl).openStream();
+    byte[] bytes = IOUtils.toByteArray(is);
+    is.close();
     int pictureIdx = wb.addPicture(bytes, XSSFWorkbook.PICTURE_TYPE_JPEG);
     ClientAnchor anchor = helper.createClientAnchor();
     anchor.setCol1(2);
