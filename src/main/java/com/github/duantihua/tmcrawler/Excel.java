@@ -26,9 +26,6 @@ import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.beangle.commons.collection.CollectUtils;
-import org.beangle.commons.io.IOs;
-
-import com.sun.xml.internal.messaging.saaj.util.ByteInputStream;
 
 public class Excel implements Writer {
   private XSSFWorkbook wb = new XSSFWorkbook();
@@ -92,7 +89,7 @@ public class Excel implements Writer {
     titleCell.setCellStyle(textStyle);
     InputStream is = new URL(imgurl).openStream();
     byte[] bytes = IOUtils.toByteArray(is);
-    IOs.copy(new ByteInputStream(bytes, bytes.length), new FileOutputStream("/tmp/" + code + ".jpg"));
+    //IOs.copy(new ByteInputStream(bytes, bytes.length), new FileOutputStream("/tmp/" + code + ".jpg"));
     is.close();
     int pictureIdx = wb.addPicture(bytes, XSSFWorkbook.PICTURE_TYPE_JPEG);
     ClientAnchor anchor = helper.createClientAnchor();
