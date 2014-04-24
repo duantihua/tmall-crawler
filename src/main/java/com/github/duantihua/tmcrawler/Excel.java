@@ -7,6 +7,7 @@ import static com.github.duantihua.tmcrawler.ProductAttributes.ImageUrl;
 import static com.github.duantihua.tmcrawler.ProductAttributes.Price;
 import static com.github.duantihua.tmcrawler.ProductAttributes.Title;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.URL;
@@ -18,21 +19,27 @@ import org.apache.poi.ss.usermodel.BuiltinFormats;
 import org.apache.poi.ss.usermodel.ClientAnchor;
 import org.apache.poi.ss.usermodel.CreationHelper;
 import org.apache.poi.ss.usermodel.Drawing;
+import org.apache.poi.ss.usermodel.Hyperlink;
 import org.apache.poi.ss.usermodel.Picture;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
+import org.apache.poi.xssf.usermodel.XSSFHyperlink;
 import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.beangle.commons.collection.CollectUtils;
+import org.beangle.commons.lang.SystemInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Excel implements Writer {
+  private static final Logger logger = LoggerFactory.getLogger(Excel.class);
   private XSSFWorkbook wb = new XSSFWorkbook();
-  private int sheetIdx = 0;
-  private XSSFSheet sheet = wb.createSheet("data0");
+  private int sheetIdx = 1;
+  private XSSFSheet sheet = wb.createSheet("data" + sheetIdx);
   private CreationHelper helper = wb.getCreationHelper();
-  private Drawing drawing = sheet.createDrawingPatriarch();
+  private Drawing drawing;
   private XSSFCellStyle textStyle = wb.createCellStyle();
   private XSSFCellStyle priceStyle = wb.createCellStyle();
   private int rowIdx = 0;
@@ -49,7 +56,7 @@ public class Excel implements Writer {
   }
 
   public Excel() {
-    this("/tmp/excel.xlsx");
+    this(SystemInfo.getTmpDir() + File.separator + "excel.xlsx");
   }
 
   private void initSheet() {
@@ -63,11 +70,12 @@ public class Excel implements Writer {
     header.createCell(3).setCellValue(new XSSFRichTextString("链接"));
     header.createCell(4).setCellValue(new XSSFRichTextString("售价"));
     header.createCell(5).setCellValue(new XSSFRichTextString("实际售价"));
+    drawing = sheet.createDrawingPatriarch();
   }
 
   @Override
   public boolean write(Map<String, Object> data) throws Exception {
-    if (rowIdx >= 300) {
+    if (rowIdx > 300) {
       sheetIdx++;
       sheet = wb.createSheet("data" + sheetIdx);
       rowIdx = 0;
@@ -89,7 +97,8 @@ public class Excel implements Writer {
     titleCell.setCellStyle(textStyle);
     InputStream is = new URL(imgurl).openStream();
     byte[] bytes = IOUtils.toByteArray(is);
-    //IOs.copy(new ByteInputStream(bytes, bytes.length), new FileOutputStream("/tmp/" + code + ".jpg"));
+    // IOs.copy(new ByteInputStream(bytes, bytes.length), new
+    // FileOutputStream("/tmp/" + code + ".jpg"));
     is.close();
     int pictureIdx = wb.addPicture(bytes, XSSFWorkbook.PICTURE_TYPE_JPEG);
     ClientAnchor anchor = helper.createClientAnchor();
@@ -98,7 +107,10 @@ public class Excel implements Writer {
     Picture pict = drawing.createPicture(anchor, pictureIdx);
     pict.resize(0.004);
     XSSFCell hrefCell = row.createCell(3);
-    hrefCell.setCellValue(new XSSFRichTextString(href));// 链接
+    Hyperlink link = helper.createHyperlink(XSSFHyperlink.LINK_URL);
+    link.setAddress(href);
+    hrefCell.setHyperlink(link);// 链接
+    hrefCell.setCellValue(new XSSFRichTextString(href));// 标题
     hrefCell.setCellStyle(textStyle);
     XSSFCell defaultPriceCell = row.createCell(4);// 售价
     defaultPriceCell.setCellValue(defaultPrice);
@@ -115,6 +127,7 @@ public class Excel implements Writer {
   public void close() {
     try {
       wb.write(new FileOutputStream(outputFile));
+      logger.info("write data to {}", outputFile);
     } catch (Exception e) {
       e.printStackTrace();
     }

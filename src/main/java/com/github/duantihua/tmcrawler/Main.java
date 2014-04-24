@@ -1,5 +1,6 @@
 package com.github.duantihua.tmcrawler;
 
+import java.io.File;
 import java.util.Map;
 
 import org.apache.http.HttpResponse;
@@ -7,6 +8,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.beangle.commons.lang.Numbers;
+import org.beangle.commons.lang.SystemInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +21,7 @@ public class Main {
       return;
     }
     String url = args[0];
-    Writer writer = new Excel("/tmp/category.xlsx");
+    Writer writer = new Excel(SystemInfo.getTmpDir() + File.separator + "category.xlsx");
     DetailParser detailParser = new DetailParser();
     int i = 1;
     int count = 0;
@@ -35,9 +37,6 @@ public class Main {
         data.putAll(detailParser.parse(getString(href)));
         if (writer.write(data)) logger.info("add item{}:{}", ++count, href);
         j++;
-        if(j==12) {
-          System.out.println(href);
-        }
         if (j >= 60) break;
       }
       i++;

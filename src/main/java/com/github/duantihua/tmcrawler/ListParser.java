@@ -50,7 +50,7 @@ public class ListParser {
     title = Strings.replace(title, "l", " ");
 
     String imgurl = Strings.substringBetween(imageurlMatcher.group(0), "\"", "\"");
-    String code = "I" + Strings.substringAfterLast(title, " ").trim();
+    String code = Strings.substringAfterLast(title, " ").trim();
 
     data.put(Title, Strings.substringBeforeLast(title, " "));
     data.put(Href, href);
