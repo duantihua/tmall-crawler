@@ -13,7 +13,7 @@ import static com.github.duantihua.tmcrawler.ProductAttributes.*;
 public class ListParser {
   Pattern pattern = Pattern.compile("<dl class=\"item(.*?)</dl>", Pattern.DOTALL);
   Pattern photoPattern = Pattern
-      .compile("<a(.*?)href=(.*?)\\r\\n\\s+<img(.*?)data-ks-lazyload=(.*?)\\r\\n\\s+</a>");
+      .compile("<a(.*?)href=(.*?)\\r\\n\\s+<img(.*?)data-ks-lazyload=(.*?)\\r\\n\\s+</a>", Pattern.DOTALL);
   Pattern hrefPattern = Pattern.compile("href=\"(.*?)\"");
   Pattern titlePattern = Pattern.compile("alt=\"(.*?)\"");
   Pattern imgurlPattern = Pattern.compile("data-ks-lazyload=\"(.*?)\"");
@@ -31,12 +31,13 @@ public class ListParser {
     return matcher.find();
   }
 
-  public Map<String, Object> next() {
-    Map<String, Object> data = CollectUtils.newHashMap();
+  public Map<ProductAttribute, Object> next() {
+    Map<ProductAttribute, Object> data = CollectUtils.newHashMap();
     String item = content.substring(matcher.start(), matcher.end());
 
     Matcher photoMatcher = photoPattern.matcher(item);
-    photoMatcher.find();
+    boolean finded = photoMatcher.find();
+    if(!finded) return data;
     String photo = item.substring(photoMatcher.start(), photoMatcher.end());
     Matcher hrefMatcher = hrefPattern.matcher(photo);
     Matcher titleMatcher = titlePattern.matcher(photo);
@@ -53,13 +54,19 @@ public class ListParser {
     String code = Strings.substringAfterLast(title, " ").trim();
 
     data.put(Title, Strings.substringBeforeLast(title, " "));
-    data.put(Href, href);
+    data.put(Href,processUrl(href));
     data.put(Code, code);
-    data.put(ImageUrl, imgurl);
+    data.put(ImageUrl, processUrl(imgurl));
 
     Matcher priceMatcher = pricePattern.matcher(item);
     priceMatcher.find();
     data.put(Price, Numbers.toFloat(Strings.substringAfterLast(priceMatcher.group(0), ">")));
     return data;
+  }
+  
+  private String processUrl(String url ){
+	  if (url.startsWith("//"))
+		return "http:" + url;
+	  else return url;
   }
 }

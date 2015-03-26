@@ -1,11 +1,6 @@
 package com.github.duantihua.tmcrawler;
 
-import static com.github.duantihua.tmcrawler.ProductAttributes.Code;
-import static com.github.duantihua.tmcrawler.ProductAttributes.DefaultPrice;
-import static com.github.duantihua.tmcrawler.ProductAttributes.Href;
-import static com.github.duantihua.tmcrawler.ProductAttributes.ImageUrl;
-import static com.github.duantihua.tmcrawler.ProductAttributes.Price;
-import static com.github.duantihua.tmcrawler.ProductAttributes.Title;
+import static com.github.duantihua.tmcrawler.ProductAttributes.*;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -41,16 +36,21 @@ public class Excel implements Writer {
   private CreationHelper helper = wb.getCreationHelper();
   private Drawing drawing;
   private XSSFCellStyle textStyle = wb.createCellStyle();
+  private XSSFCellStyle integerStyle = wb.createCellStyle();
   private XSSFCellStyle priceStyle = wb.createCellStyle();
   private int rowIdx = 0;
 
   private Set<String> codes = CollectUtils.newHashSet();
   private String outputFile;
 
+  private ProductAttribute[] attributes = new ProductAttribute[] { ImageUrl, Title, Code, Price,
+      DefaultPrice, Color, MonthSaleCnt, Size, StoreCnt, Href };
+
   public Excel(String outputFile) {
     super();
     this.outputFile = outputFile;
     textStyle.setWrapText(true);
+    integerStyle.setDataFormat((short) BuiltinFormats.getBuiltinFormat("0"));
     priceStyle.setDataFormat((short) BuiltinFormats.getBuiltinFormat("0.00"));
     initSheet();
   }
@@ -64,63 +64,79 @@ public class Excel implements Writer {
     sheet.setColumnWidth(2, 3800);
     sheet.setColumnWidth(3, 3 * 4200);
     XSSFRow header = sheet.createRow(rowIdx++); // 建立新行
-    header.createCell(0).setCellValue(new XSSFRichTextString("款号"));
-    header.createCell(1).setCellValue(new XSSFRichTextString("标题"));
-    header.createCell(2).setCellValue(new XSSFRichTextString("缩略图"));
-    header.createCell(3).setCellValue(new XSSFRichTextString("链接"));
-    header.createCell(4).setCellValue(new XSSFRichTextString("售价"));
-    header.createCell(5).setCellValue(new XSSFRichTextString("实际售价"));
+    header.createCell(0).setCellValue(new XSSFRichTextString("序号"));
+
+    int i = 1;
+    for (ProductAttribute attr : attributes) {
+      header.createCell(i).setCellValue(new XSSFRichTextString(attr.title));
+      i += 1;
+    }
     drawing = sheet.createDrawingPatriarch();
   }
 
+  private void write(XSSFRow row, int col, ProductAttribute attr, Map<ProductAttribute, Object> data)
+      throws Exception {
+    if (attr.valueType.equals("text")) {
+      XSSFCell titleCell = row.createCell(col);
+      titleCell.setCellValue(new XSSFRichTextString(attr.getString(data)));
+      titleCell.setCellStyle(textStyle);
+    } else if (attr.valueType.equals("double")) {
+      XSSFCell defaultPriceCell = row.createCell(col);
+      defaultPriceCell.setCellValue(attr.getDouble(data));
+      defaultPriceCell.setCellStyle(priceStyle);
+    } else if (attr.valueType.equals("long")) {
+      XSSFCell monthSaleCntCell = row.createCell(col);
+      monthSaleCntCell.setCellValue(attr.getLong(data));
+      monthSaleCntCell.setCellStyle(integerStyle);
+    } else if (attr.valueType.equals("url")) {
+      XSSFCell hrefCell = row.createCell(3);
+      Hyperlink link = helper.createHyperlink(XSSFHyperlink.LINK_URL);
+      String href = attr.getString(data);
+      link.setAddress(href);
+      hrefCell.setHyperlink(link);
+      hrefCell.setCellValue(new XSSFRichTextString(href));
+      hrefCell.setCellStyle(textStyle);
+    } else if (attr.valueType.equals("image")) {
+      String imgurl = attr.getString(data);
+      InputStream is = new URL(imgurl).openStream();
+      byte[] bytes = IOUtils.toByteArray(is);
+      // IOs.copy(new ByteInputStream(bytes, bytes.length), new
+      // FileOutputStream("/tmp/" + code + ".jpg"));
+      is.close();
+      int pictureIdx = wb.addPicture(bytes, XSSFWorkbook.PICTURE_TYPE_JPEG);
+      ClientAnchor anchor = helper.createClientAnchor();
+      anchor.setCol1(col);
+      anchor.setRow1(rowIdx);
+      Picture pict = drawing.createPicture(anchor, pictureIdx);
+      pict.resize(0.004);
+    }
+  }
+
   @Override
-  public boolean write(Map<String, Object> data) throws Exception {
+  public boolean write(Map<ProductAttribute, Object> data) throws Exception {
     if (rowIdx > 300) {
       sheetIdx++;
       sheet = wb.createSheet("data" + sheetIdx);
       rowIdx = 0;
       initSheet();
     }
-    String code = data.get(Code).toString();
-    String title = data.get(Title).toString();
-    String href = data.get(Href).toString();
-    String imgurl = data.get(ImageUrl).toString();
-    Float price = (Float) data.get(Price);
-    Float defaultPrice = (Float) data.get(DefaultPrice);
+    String code = Code.getString(data);
     if (codes.contains(code)) return false;
-    codes.add(code);
     XSSFRow row = sheet.createRow(rowIdx); // 建立新行
     row.setHeight((short) 1600);
-    row.createCell(0).setCellValue(new XSSFRichTextString(code)); // 款号
-    XSSFCell titleCell = row.createCell(1);
-    titleCell.setCellValue(new XSSFRichTextString(title));// 标题
-    titleCell.setCellStyle(textStyle);
-    InputStream is = new URL(imgurl).openStream();
-    byte[] bytes = IOUtils.toByteArray(is);
-    // IOs.copy(new ByteInputStream(bytes, bytes.length), new
-    // FileOutputStream("/tmp/" + code + ".jpg"));
-    is.close();
-    int pictureIdx = wb.addPicture(bytes, XSSFWorkbook.PICTURE_TYPE_JPEG);
-    ClientAnchor anchor = helper.createClientAnchor();
-    anchor.setCol1(2);
-    anchor.setRow1(rowIdx);
-    Picture pict = drawing.createPicture(anchor, pictureIdx);
-    pict.resize(0.004);
-    XSSFCell hrefCell = row.createCell(3);
-    Hyperlink link = helper.createHyperlink(XSSFHyperlink.LINK_URL);
-    link.setAddress(href);
-    hrefCell.setHyperlink(link);// 链接
-    hrefCell.setCellValue(new XSSFRichTextString(href));// 标题
-    hrefCell.setCellStyle(textStyle);
-    XSSFCell defaultPriceCell = row.createCell(4);// 售价
-    defaultPriceCell.setCellValue(defaultPrice);
-    defaultPriceCell.setCellStyle(priceStyle);
-
-    XSSFCell priceCell = row.createCell(5);// 实际售价
-    priceCell.setCellValue(price);
-    priceCell.setCellStyle(priceStyle);
+    // 1 序号
+    row.createCell(0).setCellValue(new XSSFRichTextString(code));
+    XSSFCell indexCell = row.createCell(1);
+    indexCell.setCellValue(new XSSFRichTextString(String.valueOf(rowIdx)));
+    indexCell.setCellStyle(integerStyle);
+    int col = 1;
+    for (ProductAttribute attr : attributes) {
+      write(row, col, attr, data);
+    }
+    codes.add(code);
     rowIdx++;
     return true;
+
   }
 
   @Override

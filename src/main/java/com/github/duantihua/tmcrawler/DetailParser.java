@@ -11,8 +11,8 @@ import org.beangle.commons.lang.Strings;
 public class DetailParser {
   Pattern pattern = Pattern.compile("defaultItemPrice\":\"([.\\d])+");
 
-  public Map<String, Object> parse(String content) {
-    Map<String, Object> data = CollectUtils.newHashMap();
+  public Map<ProductAttribute, Object> parse(String content) {
+    Map<ProductAttribute, Object> data = CollectUtils.newHashMap();
     Matcher matcher = pattern.matcher(content);
     float price = 0.0f;
     if (matcher.find()) price = Numbers.toFloat(Strings.substringAfterLast(matcher.group(0), "\""));
