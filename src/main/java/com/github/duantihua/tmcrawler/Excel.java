@@ -124,7 +124,7 @@ public class Excel implements Writer {
 
   @Override
   public boolean write(Map<ProductAttribute, Object> data) throws Exception {
-    if (rowIdx > 300) {
+    if (rowIdx > 500) {
       sheetIdx++;
       sheet = wb.createSheet("data" + sheetIdx);
       initSheet();
