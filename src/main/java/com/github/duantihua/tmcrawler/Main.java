@@ -5,15 +5,11 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.http.HttpResponse;
-import org.apache.http.client.CookieStore;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.cookie.BasicClientCookie;
 import org.apache.http.util.EntityUtils;
 import org.beangle.commons.collection.CollectUtils;
 import org.beangle.commons.lang.Numbers;
-import org.beangle.commons.lang.Strings;
 import org.beangle.commons.lang.SystemInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,6 +47,7 @@ public class Main {
     int count = 0;
     int max = Numbers.toInt(args[1]);
     int idx = 0;
+    List<Map<ProductAttribute, Object>> alldatas = CollectUtils.newArrayList();
     while (i <= max) {
       logger.info("process page:{}", i);
       String content = getString(url + "&pageNo=" + i);
@@ -64,22 +61,33 @@ public class Main {
           data.put(ProductAttributes.Index, ++idx);
           datas.add(data);
           logger.info("find item{}:{}", ++count, href);
+          // if(idx >4 ) break;
         }
       }
-
-      for (Map<ProductAttribute, Object> data : datas) {
-        // Thread.sleep(5000);
-        String href = data.get(ProductAttributes.Href).toString();
-        logger.info("fetching details item{}:{}", ProductAttributes.Index.get(data), href);
-        // Map<ProductAttribute, Object> details = detailParser.parse(getString(href));
-        Map<ProductAttribute, Object> details = CollectUtils.newHashMap();
-        if (ProductAttributes.Code.get(details) == null) {
-          logger.error("Tmall parse details failure:{}", href);
-        }
-        data.putAll(details);
-        writer.write(data);
-      }
+      alldatas.addAll(datas);
       i++;
+    }
+    logger.info("fetched {} items", alldatas.size());
+
+    List<Map<ProductAttribute, Object>> tasks = CollectUtils.newArrayList(alldatas);
+    int fail = 0;
+    while (!tasks.isEmpty() && fail < 500) {
+      Thread.sleep(10000);
+      Map<ProductAttribute, Object> data = tasks.get(0);
+      String href = data.get(ProductAttributes.Href).toString();
+      logger.info("fetching details item{}:{}", ProductAttributes.Index.get(data), href);
+      Map<ProductAttribute, Object> details = detailParser.parse(getString(href));
+      if (ProductAttributes.Code.get(details) == null) {
+        logger.error("Tmall parse details failure:{}", href);
+        fail++;
+      } else {
+        data.putAll(details);
+        tasks.remove(data);
+      }
+    }
+
+    for (Map<ProductAttribute, Object> data : alldatas) {
+      writer.write(data);
     }
     writer.close();
   }
