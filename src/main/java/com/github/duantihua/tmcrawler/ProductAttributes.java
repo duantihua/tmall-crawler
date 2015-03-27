@@ -11,6 +11,7 @@ public class ProductAttributes {
 	public static final ProductAttribute MonthSaleCnt = new ProductAttribute("monthSaleCnt","月销量","long");
 	public static final ProductAttribute Size = new ProductAttribute("size","尺码");
 	public static final ProductAttribute StoreCnt = new ProductAttribute("storeCnt","库存","long");
+	public static final ProductAttribute SaleOn = new ProductAttribute("saleOn","上市年份季节");
 	public static final ProductAttribute Href = new ProductAttribute("href","链接","url");
 
 }

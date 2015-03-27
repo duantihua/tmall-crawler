@@ -1,6 +1,15 @@
 package com.github.duantihua.tmcrawler;
 
-import static com.github.duantihua.tmcrawler.ProductAttributes.*;
+import static com.github.duantihua.tmcrawler.ProductAttributes.Code;
+import static com.github.duantihua.tmcrawler.ProductAttributes.Color;
+import static com.github.duantihua.tmcrawler.ProductAttributes.DefaultPrice;
+import static com.github.duantihua.tmcrawler.ProductAttributes.Href;
+import static com.github.duantihua.tmcrawler.ProductAttributes.ImageUrl;
+import static com.github.duantihua.tmcrawler.ProductAttributes.MonthSaleCnt;
+import static com.github.duantihua.tmcrawler.ProductAttributes.Price;
+import static com.github.duantihua.tmcrawler.ProductAttributes.Size;
+import static com.github.duantihua.tmcrawler.ProductAttributes.StoreCnt;
+import static com.github.duantihua.tmcrawler.ProductAttributes.Title;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -60,9 +69,9 @@ public class Excel implements Writer {
   }
 
   private void initSheet() {
-    sheet.setColumnWidth(1, 3 * 4500);
-    sheet.setColumnWidth(2, 3800);
-    sheet.setColumnWidth(3, 3 * 4200);
+    // sheet.setColumnWidth(1, 3 * 4500);
+    // sheet.setColumnWidth(2, 3800);
+    // sheet.setColumnWidth(3, 3 * 4200);
     XSSFRow header = sheet.createRow(rowIdx++); // 建立新行
     header.createCell(0).setCellValue(new XSSFRichTextString("序号"));
 
@@ -89,7 +98,7 @@ public class Excel implements Writer {
       monthSaleCntCell.setCellValue(attr.getLong(data));
       monthSaleCntCell.setCellStyle(integerStyle);
     } else if (attr.valueType.equals("url")) {
-      XSSFCell hrefCell = row.createCell(3);
+      XSSFCell hrefCell = row.createCell(col);
       Hyperlink link = helper.createHyperlink(XSSFHyperlink.LINK_URL);
       String href = attr.getString(data);
       link.setAddress(href);
@@ -100,8 +109,8 @@ public class Excel implements Writer {
       String imgurl = attr.getString(data);
       InputStream is = new URL(imgurl).openStream();
       byte[] bytes = IOUtils.toByteArray(is);
-      // IOs.copy(new ByteInputStream(bytes, bytes.length), new
-      // FileOutputStream("/tmp/" + code + ".jpg"));
+      // IOs.copy(new ByteInputStream(bytes, bytes.length), new FileOutputStream("/tmp/" +
+      // ProductAttributes.Code.get(data) + ".jpg"));
       is.close();
       int pictureIdx = wb.addPicture(bytes, XSSFWorkbook.PICTURE_TYPE_JPEG);
       ClientAnchor anchor = helper.createClientAnchor();
@@ -124,14 +133,14 @@ public class Excel implements Writer {
     if (codes.contains(code)) return false;
     XSSFRow row = sheet.createRow(rowIdx); // 建立新行
     row.setHeight((short) 1600);
-    // 1 序号
-    row.createCell(0).setCellValue(new XSSFRichTextString(code));
-    XSSFCell indexCell = row.createCell(1);
+    // 0 序号
+    XSSFCell indexCell = row.createCell(0);
     indexCell.setCellValue(new XSSFRichTextString(String.valueOf(rowIdx)));
     indexCell.setCellStyle(integerStyle);
     int col = 1;
     for (ProductAttribute attr : attributes) {
       write(row, col, attr, data);
+      col += 1;
     }
     codes.add(code);
     rowIdx++;

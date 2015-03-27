@@ -15,7 +15,7 @@ public class ListParser {
   Pattern photoPattern = Pattern
       .compile("<a(.*?)href=(.*?)\\r\\n\\s+<img(.*?)data-ks-lazyload=(.*?)\\r\\n\\s+</a>", Pattern.DOTALL);
   Pattern hrefPattern = Pattern.compile("href=\"(.*?)\"");
-  Pattern titlePattern = Pattern.compile("alt=\"(.*?)\"");
+  Pattern titlePattern = Pattern.compile("alt=\"(.*?)\"", Pattern.DOTALL);
   Pattern imgurlPattern = Pattern.compile("data-ks-lazyload=\"(.*?)\"");
   Pattern pricePattern = Pattern.compile("c-price\">([.\\d]*)\\D");
   Matcher matcher = null;

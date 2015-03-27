@@ -4,53 +4,64 @@ import java.util.Map;
 
 public class ProductAttribute {
 
-  String name;
+	String name;
 
-  String title;
+	String title;
 
-  String valueType = "text";
+	String valueType = "text";
 
-  public ProductAttribute(String n, String t) {
-    this.name = n;
-    this.title = t;
-  }
+	public ProductAttribute(String n, String t) {
+		this.name = n;
+		this.title = t;
+	}
 
-  public ProductAttribute(String n, String t, String v) {
-    this.name = n;
-    this.title = t;
-    this.valueType = v;
-  }
+	public ProductAttribute(String n, String t, String v) {
+		this.name = n;
+		this.title = t;
+		this.valueType = v;
+	}
 
-  String getString(Map<ProductAttribute, Object> data) {
-    Object value = data.get(this);
-    if (null != value) return value.toString();
-    else return "";
-  }
+	String getString(Map<ProductAttribute, Object> data) {
+		Object value = data.get(this);
+		if (null != value)
+			return value.toString();
+		else
+			return "";
+	}
 
-  double getDouble(Map<ProductAttribute, Object> data) {
-    Object value = data.get(this);
-    if (null != value) return ((Number) value).doubleValue();
-    else return 0;
-  }
+	double getDouble(Map<ProductAttribute, Object> data) {
+		Object value = data.get(this);
+		if (null != value)
+			return ((Number) value).doubleValue();
+		else
+			return 0;
+	}
 
-  long getLong(Map<ProductAttribute, Object> data) {
-    Object value = data.get(this);
-    if (null != value) return ((Number) value).longValue();
-    else return 0L;
-  }
+	long getLong(Map<ProductAttribute, Object> data) {
+		Object value = data.get(this);
+		if (null != value)
+			return ((Number) value).longValue();
+		else
+			return 0L;
+	}
 
-  Object get(Map<ProductAttribute, Object> data) {
-    return data.get(this);
-  }
+	Object get(Map<ProductAttribute, Object> data) {
+		return data.get(this);
+	}
 
-  @Override
-  public int hashCode() {
-    return name.hashCode();
-  }
+	@Override
+	public int hashCode() {
+		return name.hashCode();
+	}
 
-  @Override
-  public boolean equals(Object obj) {
-    return name.equals(((ProductAttribute) obj).name);
-  }
+	@Override
+	public String toString() {
+		return title + "[" + name + "]";
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return name.equals(((ProductAttribute) obj).name);
+	}
 
 }

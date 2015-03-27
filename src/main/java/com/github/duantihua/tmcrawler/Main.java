@@ -36,7 +36,7 @@ public class Main {
 			while (parser.hasNext()) {
 				Map<ProductAttribute, Object> data = parser.next();
 				if (!data.isEmpty()) {
-					String href = data.get("href").toString();
+					String href = data.get(ProductAttributes.Href).toString();
 					data.putAll(detailParser.parse(getString(href)));
 					if (writer.write(data))
 						logger.info("add item{}:{}", ++count, href);
