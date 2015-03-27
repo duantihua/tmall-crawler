@@ -5,6 +5,7 @@ import static com.github.duantihua.tmcrawler.ProductAttributes.Color;
 import static com.github.duantihua.tmcrawler.ProductAttributes.DefaultPrice;
 import static com.github.duantihua.tmcrawler.ProductAttributes.Href;
 import static com.github.duantihua.tmcrawler.ProductAttributes.ImageUrl;
+import static com.github.duantihua.tmcrawler.ProductAttributes.Index;
 import static com.github.duantihua.tmcrawler.ProductAttributes.MonthSaleCnt;
 import static com.github.duantihua.tmcrawler.ProductAttributes.Price;
 import static com.github.duantihua.tmcrawler.ProductAttributes.Size;
@@ -20,13 +21,12 @@ import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.poi.ss.usermodel.BuiltinFormats;
-import org.apache.poi.ss.usermodel.ClientAnchor;
 import org.apache.poi.ss.usermodel.CreationHelper;
 import org.apache.poi.ss.usermodel.Drawing;
 import org.apache.poi.ss.usermodel.Hyperlink;
-import org.apache.poi.ss.usermodel.Picture;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
+import org.apache.poi.xssf.usermodel.XSSFClientAnchor;
 import org.apache.poi.xssf.usermodel.XSSFHyperlink;
 import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.apache.poi.xssf.usermodel.XSSFRow;
@@ -36,6 +36,7 @@ import org.beangle.commons.collection.CollectUtils;
 import org.beangle.commons.lang.SystemInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 
 public class Excel implements Writer {
   private static final Logger logger = LoggerFactory.getLogger(Excel.class);
@@ -52,7 +53,7 @@ public class Excel implements Writer {
   private Set<String> codes = CollectUtils.newHashSet();
   private String outputFile;
 
-  private ProductAttribute[] attributes = new ProductAttribute[] { ImageUrl, Title, Code, Price,
+  private ProductAttribute[] attributes = new ProductAttribute[] { Index, ImageUrl, Title, Code, Price,
       DefaultPrice, Color, MonthSaleCnt, Size, StoreCnt, Href };
 
   public Excel(String outputFile) {
@@ -69,15 +70,12 @@ public class Excel implements Writer {
   }
 
   private void initSheet() {
-    // sheet.setColumnWidth(1, 3 * 4500);
-    // sheet.setColumnWidth(2, 3800);
-    // sheet.setColumnWidth(3, 3 * 4200);
+    rowIdx = 0;
     XSSFRow header = sheet.createRow(rowIdx++); // 建立新行
-    header.createCell(0).setCellValue(new XSSFRichTextString("序号"));
-
-    int i = 1;
+    int i = 0;
     for (ProductAttribute attr : attributes) {
       header.createCell(i).setCellValue(new XSSFRichTextString(attr.title));
+      sheet.setColumnWidth(i, attr.length);
       i += 1;
     }
     drawing = sheet.createDrawingPatriarch();
@@ -109,15 +107,18 @@ public class Excel implements Writer {
       String imgurl = attr.getString(data);
       InputStream is = new URL(imgurl).openStream();
       byte[] bytes = IOUtils.toByteArray(is);
-      // IOs.copy(new ByteInputStream(bytes, bytes.length), new FileOutputStream("/tmp/" +
-      // ProductAttributes.Code.get(data) + ".jpg"));
-      is.close();
+//      IOs.copy(new ByteInputStream(bytes, bytes.length), new FileOutputStream("/tmp/"
+//          + ProductAttributes.Code.get(data) + ".jpg"));
       int pictureIdx = wb.addPicture(bytes, XSSFWorkbook.PICTURE_TYPE_JPEG);
-      ClientAnchor anchor = helper.createClientAnchor();
-      anchor.setCol1(col);
-      anchor.setRow1(rowIdx);
-      Picture pict = drawing.createPicture(anchor, pictureIdx);
-      pict.resize(0.004);
+      is.close();
+      XSSFClientAnchor anchor = new XSSFClientAnchor(0, 0, 0, 0, (short) col, rowIdx, (short) (col + 1),
+          rowIdx + 1);
+      // ClientAnchor anchor = helper.createClientAnchor();
+      // anchor.setCol1(col);
+      // anchor.setRow1(rowIdx);
+      anchor.setAnchorType(3);
+      drawing.createPicture(anchor, pictureIdx);
+      // pict.resize(0.4);
     }
   }
 
@@ -126,23 +127,18 @@ public class Excel implements Writer {
     if (rowIdx > 300) {
       sheetIdx++;
       sheet = wb.createSheet("data" + sheetIdx);
-      rowIdx = 0;
       initSheet();
     }
-    String code = Code.getString(data);
-    if (codes.contains(code)) return false;
+    String href = Href.getString(data);
+    if (codes.contains(href)) return false;
     XSSFRow row = sheet.createRow(rowIdx); // 建立新行
-    row.setHeight((short) 1600);
-    // 0 序号
-    XSSFCell indexCell = row.createCell(0);
-    indexCell.setCellValue(new XSSFRichTextString(String.valueOf(rowIdx)));
-    indexCell.setCellStyle(integerStyle);
-    int col = 1;
+    row.setHeight((short) 1200);
+    int col = 0;
     for (ProductAttribute attr : attributes) {
       write(row, col, attr, data);
       col += 1;
     }
-    codes.add(code);
+    codes.add(href);
     rowIdx++;
     return true;
 
@@ -151,7 +147,9 @@ public class Excel implements Writer {
   @Override
   public void close() {
     try {
-      wb.write(new FileOutputStream(outputFile));
+      FileOutputStream fos = new FileOutputStream(outputFile);
+      wb.write(fos);
+      fos.close();
       logger.info("write data to {}", outputFile);
     } catch (Exception e) {
       e.printStackTrace();

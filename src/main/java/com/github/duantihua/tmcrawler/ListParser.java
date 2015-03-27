@@ -12,8 +12,8 @@ import static com.github.duantihua.tmcrawler.ProductAttributes.*;
 
 public class ListParser {
   Pattern pattern = Pattern.compile("<dl class=\"item(.*?)</dl>", Pattern.DOTALL);
-  Pattern photoPattern = Pattern
-      .compile("<a(.*?)href=(.*?)\\r\\n\\s+<img(.*?)data-ks-lazyload=(.*?)\\r\\n\\s+</a>", Pattern.DOTALL);
+  Pattern photoPattern = Pattern.compile(
+      "<a(.*?)href=(.*?)\\r\\n\\s+<img(.*?)data-ks-lazyload=(.*?)\\r\\n\\s+</a>", Pattern.DOTALL);
   Pattern hrefPattern = Pattern.compile("href=\"(.*?)\"");
   Pattern titlePattern = Pattern.compile("alt=\"(.*?)\"", Pattern.DOTALL);
   Pattern imgurlPattern = Pattern.compile("data-ks-lazyload=\"(.*?)\"");
@@ -37,7 +37,7 @@ public class ListParser {
 
     Matcher photoMatcher = photoPattern.matcher(item);
     boolean finded = photoMatcher.find();
-    if(!finded) return data;
+    if (!finded) return data;
     String photo = item.substring(photoMatcher.start(), photoMatcher.end());
     Matcher hrefMatcher = hrefPattern.matcher(photo);
     Matcher titleMatcher = titlePattern.matcher(photo);
@@ -48,14 +48,12 @@ public class ListParser {
     String href = Strings.substringBetween(hrefMatcher.group(0), "\"", "\"");
     String title = Strings.substringBetween(titleMatcher.group(0), "\"", "\"");
     title = Strings.replace(title, "|", " ");
-    title = Strings.replace(title, "l", " ");
+    title = Strings.replace(title, "\n", " ");
 
     String imgurl = Strings.substringBetween(imageurlMatcher.group(0), "\"", "\"");
-    String code = Strings.substringAfterLast(title, " ").trim();
 
-    data.put(Title, Strings.substringBeforeLast(title, " "));
-    data.put(Href,processUrl(href));
-    data.put(Code, code);
+    data.put(Title, title);
+    data.put(Href, processUrl(href));
     data.put(ImageUrl, processUrl(imgurl));
 
     Matcher priceMatcher = pricePattern.matcher(item);
@@ -63,10 +61,9 @@ public class ListParser {
     data.put(Price, Numbers.toFloat(Strings.substringAfterLast(priceMatcher.group(0), ">")));
     return data;
   }
-  
-  private String processUrl(String url ){
-	  if (url.startsWith("//"))
-		return "http:" + url;
-	  else return url;
+
+  private String processUrl(String url) {
+    if (url.startsWith("//")) return "http:" + url;
+    else return url;
   }
 }
