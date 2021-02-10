@@ -1,4 +1,4 @@
 tmall-crawler
 =============
 
-Tmall Product Crawler
+This is a simple Tmall Product Crawler
